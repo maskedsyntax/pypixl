@@ -1,5 +1,0 @@
-/home/batman/maskedsyntax/pypixl/build/CMakeFiles/PyPixlCpp.dir
-/home/batman/maskedsyntax/pypixl/build/CMakeFiles/edit_cache.dir
-/home/batman/maskedsyntax/pypixl/build/CMakeFiles/rebuild_cache.dir
-/home/batman/maskedsyntax/pypixl/build/CMakeFiles/PyPixlCpp_autogen_timestamp_deps.dir
-/home/batman/maskedsyntax/pypixl/build/CMakeFiles/PyPixlCpp_autogen.dir
