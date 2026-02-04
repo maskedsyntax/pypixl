@@ -1,6 +1,6 @@
 # PyPixl
 
-A complete rewrite of the PyPixl camera application using C++, Qt 6, and OpenCV.
+A modern camera application built with C++, Qt 6, and OpenCV.
 
 ## Features
 - Fast & Lightweight: Written in C++17.
