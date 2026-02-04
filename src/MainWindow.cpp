@@ -103,8 +103,13 @@ void MainWindow::setupCamera(int index) {
         // Set basic props
         m_cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
         m_cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
-        m_timer->start(30); // ~30 FPS
-        m_statusLabel->setText(QString("Camera %1 Connected").arg(index));
+        
+        double fps = m_cap.get(cv::CAP_PROP_FPS);
+        if (fps <= 0 || fps > 120) fps = 30;
+        int interval = static_cast<int>(1000.0 / fps);
+        
+        m_timer->start(interval);
+        m_statusLabel->setText(QString("Camera %1 Connected (%2 FPS)").arg(index).arg(fps));
     } else {
         m_statusLabel->setText(QString("Failed to open Camera %1").arg(index));
         // Try to clear the viewfinder
@@ -122,9 +127,37 @@ void MainWindow::updateFrame() {
         m_cap >> m_currentFrame;
         if (!m_currentFrame.empty()) {
             
-            // Handle Recording
+            // Handle Recording with Frame Duplication (CFR enforcement)
             if (m_isRecording && m_writer.isOpened()) {
-                m_writer.write(m_currentFrame);
+                qint64 currentTimeMs = m_recordingTimer.elapsed();
+                
+                // First frame or timer reset
+                if (m_lastRecordingTimeMs == 0) {
+                    m_writer.write(m_currentFrame);
+                    m_lastRecordingTimeMs = currentTimeMs;
+                } else {
+                    double delta = currentTimeMs - m_lastRecordingTimeMs;
+                    
+                    // Calculate how many 33.33ms frames fit in this delta
+                    int framesToWrite = static_cast<int>(std::round(delta / MS_PER_FRAME));
+                    
+                    // Always write at least one frame if significant time passed, 
+                    // but clamp to avoid massive dumps if something hangs.
+                    if (framesToWrite < 1) framesToWrite = 1; 
+                    if (framesToWrite > 5) framesToWrite = 5; 
+
+                    for (int i = 0; i < framesToWrite; ++i) {
+                        m_writer.write(m_currentFrame);
+                    }
+                    
+                    // Advance logical time by exactly how many frames we wrote
+                    m_lastRecordingTimeMs += (framesToWrite * MS_PER_FRAME);
+                    
+                    // Sync up if we drift too far (e.g. paused for seconds)
+                    if (std::abs(currentTimeMs - m_lastRecordingTimeMs) > 200) {
+                         m_lastRecordingTimeMs = currentTimeMs;
+                    }
+                }
             }
 
             // Update UI
@@ -164,26 +197,49 @@ void MainWindow::captureImage() {
 
 void MainWindow::toggleRecording() {
     if (!m_isRecording) {
+        if (m_currentFrame.empty()) {
+            m_statusLabel->setText("Error: No camera frame available.");
+            m_recordButton->setChecked(false);
+            return;
+        }
+
         // Start Recording
         QString path = QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
         if (path.isEmpty()) path = QDir::homePath();
         
         QString fileName = path + "/PyPixl_" + QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + ".avi";
         
-        int width = (int)m_cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        int height = (int)m_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        cv::Size size = m_currentFrame.size();
         
-        // MJPG codec
-        m_writer.open(fileName.toStdString(), cv::VideoWriter::fourcc('M','J','P','G'), 30, cv::Size(width, height));
+        // Force 30 FPS for the container. We will duplicate frames to match this.
+        double fps = TARGET_FPS; 
+        
+        // XVID codec is generally more compatible for .avi
+        m_writer.open(fileName.toStdString(), cv::VideoWriter::fourcc('X','V','I','D'), fps, size);
         
         if (m_writer.isOpened()) {
             m_isRecording = true;
+            m_recordingTimer.start();
+            m_lastRecordingTimeMs = 0; // Reset logic
+            
             m_recordButton->setText("Stop");
             m_recordButton->setStyleSheet("background-color: #e74c3c; color: white; border: none; border-radius: 25px;");
-            m_statusLabel->setText("Recording... " + fileName);
+            m_statusLabel->setText(QString("Recording... %1 (Fixed 30 FPS)").arg(fileName));
         } else {
-            m_statusLabel->setText("Error: Could not start recording.");
-            m_recordButton->setChecked(false);
+            // Fallback to MJPG if XVID fails
+            m_writer.open(fileName.toStdString(), cv::VideoWriter::fourcc('M','J','P','G'), fps, size);
+            if (m_writer.isOpened()) {
+                m_isRecording = true;
+                m_recordingTimer.start();
+                m_lastRecordingTimeMs = 0; 
+
+                m_recordButton->setText("Stop");
+                m_recordButton->setStyleSheet("background-color: #e74c3c; color: white; border: none; border-radius: 25px;");
+                m_statusLabel->setText(QString("Recording (MJPG)... %1 (Fixed 30 FPS)").arg(fileName));
+            } else {
+                m_statusLabel->setText("Error: Could not start recording.");
+                m_recordButton->setChecked(false);
+            }
         }
     } else {
         // Stop Recording

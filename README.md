@@ -22,5 +22,5 @@ mkdir build
 cd build
 cmake ..
 make
-./PyPixlCpp
+./pypixl
 ```

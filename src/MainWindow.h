@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <QPushButton>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <opencv2/opencv.hpp>
 
 class MainWindow : public QMainWindow {
@@ -32,6 +33,12 @@ private:
     cv::VideoWriter m_writer;
     cv::Mat m_currentFrame;
     bool m_isRecording = false;
+    
+    // Recording sync
+    QElapsedTimer m_recordingTimer;
+    qint64 m_lastRecordingTimeMs = 0;
+    const double TARGET_FPS = 30.0;
+    const double MS_PER_FRAME = 1000.0 / 30.0;
 
     // UI Elements
     QWidget *m_centralWidget = nullptr;
