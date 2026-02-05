@@ -1,4 +1,4 @@
-# PyPixl
+# Cameo
 
 A modern camera application built with C++, Qt 6, and OpenCV.
 
@@ -22,5 +22,5 @@ mkdir build
 cd build
 cmake ..
 make
-./pypixl
+./cameo
 ```

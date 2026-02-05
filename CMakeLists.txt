@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(pypixl VERSION 1.0.0 LANGUAGES CXX)
+project(cameo VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,9 +17,9 @@ set(PROJECT_SOURCES
     src/MainWindow.h
 )
 
-add_executable(pypixl ${PROJECT_SOURCES})
+add_executable(cameo ${PROJECT_SOURCES})
 
-target_link_libraries(pypixl PRIVATE
+target_link_libraries(cameo PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets

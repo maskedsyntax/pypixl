@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     app.setStyle("Fusion");
 
     MainWindow window;
-    window.setWindowTitle("PyPixl");
+    window.setWindowTitle("Cameo");
     window.resize(1024, 768);
     window.show();
 

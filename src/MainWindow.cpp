@@ -186,7 +186,7 @@ void MainWindow::captureImage() {
     QString path = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
     if (path.isEmpty()) path = QDir::homePath();
     
-    QString fileName = path + "/PyPixl_" + QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + ".png";
+    QString fileName = path + "/Cameo_" + QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + ".png";
     
     // Save current frame (convert BGR to RGB first for QImage save, or use opencv imwrite)
     // Using OpenCV imwrite is safer for formats
@@ -207,7 +207,7 @@ void MainWindow::toggleRecording() {
         QString path = QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
         if (path.isEmpty()) path = QDir::homePath();
         
-        QString fileName = path + "/PyPixl_" + QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + ".avi";
+        QString fileName = path + "/Cameo_" + QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + ".avi";
         
         cv::Size size = m_currentFrame.size();
         
